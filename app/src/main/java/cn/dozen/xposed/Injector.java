@@ -1,8 +1,6 @@
 package cn.dozen.xposed;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -17,11 +15,14 @@ public class Injector implements IXposedHookLoadPackage {
         if(lpparam.packageName.equals("android")) {
             Class<?> am = Class.forName("com.android.server.am.ActivityManagerService", false, lpparam.classLoader);
             Class<?> broadcustQueue = XposedHelpers.findClass("com.android.server.am.BroadcastQueue", lpparam.classLoader);
+            Class<?> activeServices = XposedHelpers.findClass("com.android.server.am.ActiveServices", lpparam.classLoader);
+
             Hooker.hookStartProcessLocked(am);
             Hooker.hookGetContentProviderImpl(am);
             Hooker.hookStartService(am);
             Hooker.hookBindService(am);
             Hooker.hookProcessBroadcastLocked(broadcustQueue);
+            Hooker.hookRetrieveServiceLocked(activeServices);
         }
     }
 }
