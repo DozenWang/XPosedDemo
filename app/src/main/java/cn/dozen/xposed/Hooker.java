@@ -4,11 +4,11 @@ import android.content.Intent;
 import android.os.Build;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 /**
  * Created by wangyida on 2016/6/16.
@@ -102,12 +102,35 @@ public class Hooker {
         }
     }
 
+    public static void hookProcessNextBroadcast(Class<?> broadcastqueue) {
+        XposedHelpers.findAndHookMethod(broadcastqueue, "processNextBroadcast", boolean.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                Field mOrderBroadcastsField = XposedHelpers.findField(param.thisObject.getClass(), "mOrderedBroadcasts");
+                Object mOrderedBroadcasts = mOrderBroadcastsField.get(param.thisObject);
+
+                ArrayList<Object> list2 = (ArrayList<Object>) mOrderedBroadcasts;
+
+                if(!list2.isEmpty()) {
+                    Object br = list2.get(0);
+                    Field intentField = XposedHelpers.findField(br.getClass(), "intent");
+                    Object intent = intentField.get(br);
+
+                    Field actionField = XposedHelpers.findField(intent.getClass(), "mAction");
+                    Object action = actionField.get(intent);
+                    if (action.equals("cn.dozen.action.wake")) {
+                        XposedBridge.log("processNextBroadcast : " + action);
+                        param.setResult(null);
+                    }
+                }
+            }
+
+
+        });
+    }
+
     public static void hookProcessBroadcastLocked(Class<?> broadcastqueue) {
         XposedHelpers.findAndHookMethod(broadcastqueue, "processCurBroadcastLocked", "com.android.server.am.BroadcastRecord", "com.android.server.am.ProcessRecord", new XC_MethodHook() {
-//            @Override
-//            protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
-//                XposedBridge.log("processCurBroadcastLocked#" + Util.buildBroadcastRecord(param.args[0]) + "#" + Util.buildProcessRecord(param.args[1]));
-//            }
 
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {

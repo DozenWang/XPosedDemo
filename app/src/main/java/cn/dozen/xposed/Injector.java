@@ -14,15 +14,16 @@ public class Injector implements IXposedHookLoadPackage {
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         if(lpparam.packageName.equals("android")) {
             Class<?> am = Class.forName("com.android.server.am.ActivityManagerService", false, lpparam.classLoader);
-            Class<?> broadcustQueue = XposedHelpers.findClass("com.android.server.am.BroadcastQueue", lpparam.classLoader);
+            Class<?> broadcastQueue = XposedHelpers.findClass("com.android.server.am.BroadcastQueue", lpparam.classLoader);
             Class<?> activeServices = XposedHelpers.findClass("com.android.server.am.ActiveServices", lpparam.classLoader);
 
             Hooker.hookStartProcessLocked(am);
             Hooker.hookGetContentProviderImpl(am);
             Hooker.hookStartService(am);
             Hooker.hookBindService(am);
-            Hooker.hookProcessBroadcastLocked(broadcustQueue);
+            Hooker.hookProcessBroadcastLocked(broadcastQueue);
             Hooker.hookRetrieveServiceLocked(activeServices);
+            Hooker.hookProcessNextBroadcast(broadcastQueue);
         }
     }
 }
